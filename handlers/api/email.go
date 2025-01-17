@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"lilmail/models"
 	"log"
 	"mime"
@@ -303,7 +302,7 @@ func (c *Client) processMessage(msg *imap.Message) (models.Email, error) {
 	r := msg.GetBody(&section)
 	if r != nil {
 		// Read the body
-		body, err := ioutil.ReadAll(r)
+		body, err := io.ReadAll(r)
 		if err != nil {
 			return email, fmt.Errorf("error reading body: %v", err)
 		}
@@ -339,7 +338,7 @@ func (c *Client) processMessage(msg *imap.Message) (models.Email, error) {
 				log.Printf("Part Content-Type: %s", p.Header.Get("Content-Type"))
 
 				// Read the part
-				partData, err := ioutil.ReadAll(p)
+				partData, err := io.ReadAll(p)
 				if err != nil {
 					log.Printf("Error reading part: %v", err)
 					continue
@@ -356,11 +355,14 @@ func (c *Client) processMessage(msg *imap.Message) (models.Email, error) {
 				case strings.Contains(partType, "text/html"):
 					email.HTML = template.HTML(partData)
 					log.Printf("Found HTML: %d bytes", len(string(email.HTML)))
+				default:
+					email.Body = string(partData)
+					log.Printf("Found unknown: %d bytes", len(email.Body))
 				}
 			}
 		} else {
 			// Handle non-multipart messages
-			bodyData, err := ioutil.ReadAll(m.Body)
+			bodyData, err := io.ReadAll(m.Body)
 			if err == nil {
 				email.Body = string(bodyData)
 				log.Printf("Non-multipart body: %d bytes", len(email.Body))
