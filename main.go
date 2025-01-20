@@ -1,16 +1,19 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"lilmail/config"
 	"lilmail/handlers/api"
 	"lilmail/handlers/web"
 	"lilmail/storage"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -18,6 +21,11 @@ import (
 )
 
 var store *session.Store
+
+// content is our static web server content.
+//
+//go:embed static
+var staticContent embed.FS
 
 func init() {
 	// Create file storage
@@ -51,6 +59,7 @@ func isAPIRequest(c *fiber.Ctx) bool {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	// Load configuration
 	config, err := config.LoadConfig("config.toml")
 	if err != nil {
@@ -129,6 +138,12 @@ func main() {
 	webAuthHandler := web.NewAuthHandler(store, config)
 	webEmailHandler := web.NewEmailHandler(store, config, webAuthHandler)
 
+	// Static asset
+	app.Use("/static", filesystem.New(filesystem.Config{
+		Root:       http.FS(staticContent),
+		PathPrefix: "static",
+		Browse:     false,
+	}))
 	// Public routes
 	app.Get("/login", webAuthHandler.ShowLogin)
 	app.Post("/login", webAuthHandler.HandleLogin)

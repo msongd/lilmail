@@ -335,6 +335,7 @@ func (c *Client) processMessage(msg *imap.Message) (models.Email, error) {
 				}
 
 				// Debug part content type
+
 				log.Printf("Part Content-Type: %s", p.Header.Get("Content-Type"))
 
 				// Read the part
@@ -355,6 +356,39 @@ func (c *Client) processMessage(msg *imap.Message) (models.Email, error) {
 				case strings.Contains(partType, "text/html"):
 					email.HTML = template.HTML(partData)
 					log.Printf("Found HTML: %d bytes", len(string(email.HTML)))
+				case strings.HasPrefix(partType, "multipart/alternative;"):
+					_, partParams, err := mime.ParseMediaType(partType)
+					if err != nil {
+						log.Printf("Error parse sub part media type: %v", err)
+						break
+					}
+					pr := multipart.NewReader(bytes.NewReader(partData), partParams["boundary"])
+					for {
+						subp, err := pr.NextPart()
+						if err == io.EOF {
+							break
+						}
+						if err != nil {
+							log.Printf("Error getting next part: %v", err)
+							continue
+						}
+						// Debug part content type
+						log.Printf("SubPart Content-Type: %s", subp.Header.Get("Content-Type"))
+						// Read the part
+						subPartData, err := io.ReadAll(subp)
+						subPartType := subp.Header.Get("Content-Type")
+						switch {
+						case strings.Contains(subPartType, "text/plain"):
+							email.Body = string(subPartData)
+							log.Printf("Found sub plain text: %d bytes", len(email.Body))
+						case strings.Contains(subPartType, "text/html"):
+							email.HTML = template.HTML(subPartData)
+							log.Printf("Found sub HTML: %d bytes", len(string(email.HTML)))
+						default:
+							email.Body = string(subPartData)
+							log.Printf("Found sub unknown: %d bytes", len(email.Body))
+						}
+					}
 				default:
 					email.Body = string(partData)
 					log.Printf("Found unknown: %d bytes", len(email.Body))
