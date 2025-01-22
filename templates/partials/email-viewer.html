@@ -129,8 +129,8 @@
                     class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"
                 >
                     <span class="text-lg font-medium text-gray-600">
-                        {{with .Email.From }}{{slice (index (split .Email.From
-                        "@") 0) 0 1}}{{end}}
+                        {{if and .Email .Email.From }}{{slice (index (split
+                        .Email.From "@") 0) 0 1}}{{end}}
                     </span>
                 </div>
                 <div class="flex-1 min-w-0">
