@@ -6,6 +6,7 @@
         <title>{{if .Title}}{{.Title}} - LilMail{{else}}LilMail{{end}}</title>
 
         <!-- Stylesheets -->
+        <!-- script src="https://cdn.tailwindcss.com"></script -->
         <script src="/static/js/tailwindcss-3.4.16.min.js"></script>
         <style type="text/css">
             [x-cloak] {
@@ -46,9 +47,14 @@
         </style>
 
         <!-- First load HTMX -->
-        <script src="/static/js/htmx-1.9.10.min.js"></script>
+        <!-- script src="https://unpkg.com/htmx.org@1.9.10"></script -->
+        <script src="/static/js/htmx-2.0.4.min.js"></script>
 
         <!-- Load Alpine.js before body -->
+        <!--script
+            defer
+            src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script -->
         <script defer src="/static/js/alpinejs-3.x.x.min.js"></script>
     </head>
     <body class="bg-gray-100 min-h-screen">

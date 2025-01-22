@@ -9,6 +9,7 @@ import (
 	"lilmail/storage"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -61,7 +62,16 @@ func isAPIRequest(c *fiber.Ctx) bool {
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	// Load configuration
-	config, err := config.LoadConfig("config.toml")
+	var globalConfig *config.Config
+	var err error
+	if len(os.Args) > 1 {
+		log.Println("Loading config from: ", os.Args[1])
+		globalConfig, err = config.LoadConfig(os.Args[1])
+	} else {
+		log.Println("Loading config default config.toml")
+		globalConfig, err = config.LoadConfig("config.toml")
+	}
+	config := globalConfig
 	if err != nil {
 		log.Fatal("Failed to load config:", err)
 	}

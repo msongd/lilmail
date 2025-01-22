@@ -288,7 +288,7 @@ func (h *AuthHandler) CreateSMTPClient(c *fiber.Ctx) (*api.SMTPClient, error) {
 		return nil, fmt.Errorf("failed to decrypt credentials: %v", err)
 	}
 
-	client := api.NewSMTPClient(smtpServer, smtpPort, creds.Email, creds.Password)
+	client := api.NewSMTPClient(smtpServer, smtpPort, creds.Email, creds.Password, h.config.Server.UsernameIsEmail)
 	if client == nil {
 		return nil, fmt.Errorf("failed to create SMTP client")
 	}

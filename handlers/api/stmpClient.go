@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/smtp"
 	"os"
@@ -11,19 +12,21 @@ import (
 
 // SMTPClient handles email sending
 type SMTPClient struct {
-	server   string
-	port     int
-	email    string
-	password string
+	server          string
+	port            int
+	email           string
+	password        string
+	usernameIsEmail bool
 }
 
 // NewSMTPClient creates a new SMTP client
-func NewSMTPClient(server string, port int, email, password string) *SMTPClient {
+func NewSMTPClient(server string, port int, email, password string, usernameIsEmail bool) *SMTPClient {
 	return &SMTPClient{
-		server:   server,
-		port:     port,
-		email:    email,
-		password: password,
+		server:          server,
+		port:            port,
+		email:           email,
+		password:        password,
+		usernameIsEmail: usernameIsEmail,
 	}
 }
 
@@ -54,8 +57,14 @@ func (c *SMTPClient) SendMail(to, subject, body string) error {
 	if err = client.StartTLS(tlsConfig); err != nil {
 		return fmt.Errorf("starttls failed: %v", err)
 	}
-
-	username := GetUsernameFromEmail(c.email)
+	var username string
+	if c.usernameIsEmail {
+		username = c.email
+	} else {
+		username = GetUsernameFromEmail(c.email)
+	}
+	log.Println("Username:", username)
+	name := GetUsernameFromEmail(c.email)
 	// Authenticate after TLS
 	auth := smtp.PlainAuth("", username, c.password, c.server)
 	if err = client.Auth(auth); err != nil {
@@ -92,7 +101,7 @@ func (c *SMTPClient) SendMail(to, subject, body string) error {
 		"\r\n"+
 		"%s",
 		now,
-		username,
+		name,
 		c.email,
 		to,
 		subject,
